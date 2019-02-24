@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>RSS2HTML</title>
+<meta charset="UTF-8">
+</head>
+<body>
+<h1>RSS2HTML</h1>
+<form method="get" action="rss.erb" >
+<p>
+RSS-URL：<input type="text" name="url" size="40">
+</p>
+<p>
+<input type="submit" value="送信"><input type="reset" value="リセット">
+</p>
+</form>
+<% if URI.regexp.match?(url = servlet_request.query['url']) %>
+  <% rss = RSS::Parser.parse(open(url).read, false) rescue nil %>
+<ul>
+  <% rss&.items&.each do |item| %>
+    <li>
+      <%= item.date.strftime('%F %R') %>
+      <a href="<%= item.link %>">
+        <%= item.title %>
+      </a>
+    </li>
+  <% end %>
+</ul>
+<% end %> 
+</body>
+</html>
+
