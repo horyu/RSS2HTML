@@ -17,7 +17,7 @@ RSS-URL：<input type="text" name="url" size="40">
 <% if URI.regexp.match?(url = servlet_request.query['url']) %>
   <% rss = RSS::Parser.parse(open(url).read, false) rescue nil %>
 <ul>
-  <% rss&.items&.each do |item| %>
+  <% rss && rss.items.each do |item| %>
     <li>
       <%= item.date.strftime('%F %R') %>
       <a href="<%= item.link %>">
