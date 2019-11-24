@@ -1,0 +1,5 @@
+#https://www.gitignore.io/api/rust
+rust/target
+rust/Cargo.lock
+**/*.rs.bk
+

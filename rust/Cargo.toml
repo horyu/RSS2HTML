@@ -1,0 +1,23 @@
+[package]
+name = "rss2html"
+version = "0.1.0"
+authors = ["horyu <28817604+horyu@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rss = "1.0"
+rocket = "0.4.2"
+reqwest = "0.9.22"
+tera = "0.11.20"
+serde = "1.0"
+serde_json = "1.0"
+lazy_static = "1.0"
+chrono = "0.4"
+
+
+[dependencies.rocket_contrib]
+version = "0.4.2"
+default-features = false
+features = ["tera_templates"]
