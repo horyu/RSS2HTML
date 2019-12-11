@@ -59,16 +59,14 @@ fn extract_string(opstr: Option<&str>) -> String {
 }
 
 fn extract_date_string(item: &rss::Item) -> String {
-    let date: &str = if let Some(x) = item.pub_date() {
-        x
-    } else if let Some(y) = item.dublin_core_ext() {
-        match y.dates().first() {
-            Some(z) => z,
-            None => "",
+    let date = item.pub_date().unwrap_or_else(|| {
+        if let Some(x) = item.dublin_core_ext() {
+            if let Some(y) = x.dates().first() {
+                return y;
+            }
         }
-    } else {
         ""
-    };
+    });
     if date.is_empty() {
         return date.to_string();
     }
