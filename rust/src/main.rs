@@ -2,6 +2,7 @@
 
 #[macro_use]
 extern crate rocket;
+use rocket::config::{Config, Environment};
 use rocket::http::uri::Uri;
 use rocket::http::RawStr;
 use rocket::response::NamedFile;
@@ -80,7 +81,11 @@ fn extract_date_string(item: &rss::Item) -> String {
 }
 
 fn main() {
-    rocket::ignite()
+    let config = Config::build(Environment::Staging)
+        .port(8080)
+        .finalize()
+        .unwrap();
+    rocket::custom(config)
         .mount("/", routes![index, rss_tera])
         .attach(Template::fairing())
         .launch();

@@ -16,11 +16,11 @@ RSS-URL：<input type="text" name="url" size="40">
 </form>
 {% if items %}
   <ul>
-    {% for item in items%}
+    {% for item in items %}
       <li>
-      {{ item.pub_date }}
+        {{ item.pub_date }}
         <a href="{{ item.link }}">
-        {{ item.title }}
+          {{ item.title }}
         </a>
       </li>
     {% endfor %}
