@@ -10,10 +10,7 @@ use rocket_contrib::templates::Template;
 
 use tera::Context;
 
-extern crate reqwest;
-
 use rss::Channel;
-use std::io::BufReader;
 
 use chrono::DateTime;
 
@@ -39,7 +36,7 @@ fn rss_tera(url: &RawStr) -> Template {
         Ok(mut x) => x.text().unwrap(),
         Err(_) => return Template::render("rss", &context),
     };
-    let channel = match Channel::read_from(BufReader::new(res.as_bytes())) {
+    let channel = match Channel::read_from(std::io::BufReader::new(res.as_bytes())) {
         Ok(x) => x,
         Err(_) => return Template::render("rss", &context),
     };

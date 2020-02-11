@@ -16,7 +16,6 @@ serde_json = "1.0"
 lazy_static = "1.0"
 chrono = "0.4"
 
-
 [dependencies.rocket_contrib]
 version = "0.4.2"
 default-features = false
