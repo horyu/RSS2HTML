@@ -3,16 +3,22 @@
 #[macro_use]
 extern crate rocket;
 use rocket::config::{Config, Environment};
-use rocket::http::uri::Uri;
-use rocket::http::RawStr;
-use rocket::response::NamedFile;
-use rocket_contrib::templates::Template;
+use rocket::http::{uri::Uri, ContentType, RawStr, Status};
+use rocket::response;
+use rocket::response::content;
 
-use tera::Context;
+#[macro_use]
+extern crate lazy_static;
 
-use rss::Channel;
+#[macro_use]
+extern crate rust_embed;
+#[derive(RustEmbed)]
+#[folder = "files/"]
+struct Asset;
 
 use chrono::DateTime;
+use rss::Channel;
+use tera::{Context, Tera};
 
 use serde::{Deserialize, Serialize};
 
@@ -24,23 +30,51 @@ struct Item {
 }
 
 #[get("/")]
-fn index() -> Option<NamedFile> {
-    NamedFile::open(std::path::Path::new("index.html")).ok()
+fn index<'r>() -> response::Result<'r> {
+    Asset::get("index.html").map_or_else(
+        || Err(Status::NotFound),
+        |d| {
+            response::Response::build()
+                .header(ContentType::HTML)
+                .sized_body(std::io::Cursor::new(d))
+                .ok()
+        },
+    )
+}
+
+lazy_static! {
+    pub static ref TEMPLATES: Tera = {
+        let mut tera = Tera::default();
+        tera.autoescape_on(vec!["one_off"]);
+        let input = Asset::get("rss.tera").unwrap();
+        let input = String::from_utf8(input.to_vec()).unwrap();
+        tera.add_raw_template("one_off", &input).unwrap();
+        tera
+    };
 }
 
 #[get("/rss.tera?<url>")]
-fn rss_tera(url: &RawStr) -> Template {
+fn rss_tera(url: &RawStr) -> content::Html<String> {
+    let items = get_items(url);
     let mut context = Context::new();
-    let rss_url = Uri::percent_decode(&url.as_bytes()).unwrap().into_owned();
+    context.insert("items", &items);
+    content::Html(TEMPLATES.render("one_off", &context).unwrap())
+}
+
+fn get_items(url: &RawStr) -> Vec<Item> {
+    let mut items: Vec<Item> = Vec::new();
+    let rss_url = match Uri::percent_decode(&url.as_bytes()) {
+        Ok(x) => x.into_owned(),
+        _ => return items,
+    };
     let res = match reqwest::get(&rss_url) {
         Ok(mut x) => x.text().unwrap(),
-        Err(_) => return Template::render("rss", &context),
+        _ => return items,
     };
     let channel = match Channel::read_from(std::io::BufReader::new(res.as_bytes())) {
         Ok(x) => x,
-        Err(_) => return Template::render("rss", &context),
+        _ => return items,
     };
-    let mut items: Vec<Item> = Vec::new();
     for item in channel.items() {
         items.push(Item {
             title: extract_string(item.title()),
@@ -48,8 +82,7 @@ fn rss_tera(url: &RawStr) -> Template {
             pub_date: extract_date_string(item),
         })
     }
-    context.insert("items", &items);
-    Template::render("rss", &context)
+    items
 }
 
 fn extract_string(opstr: Option<&str>) -> String {
@@ -84,6 +117,5 @@ fn main() {
         .unwrap();
     rocket::custom(config)
         .mount("/", routes![index, rss_tera])
-        .attach(Template::fairing())
         .launch();
 }
