@@ -22,13 +22,6 @@ use tera::{Context, Tera};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Item {
-    title: String,
-    link: String,
-    pub_date: String,
-}
-
 #[get("/")]
 fn index<'r>() -> response::Result<'r> {
     Asset::get("index.html").map_or_else(
@@ -42,13 +35,20 @@ fn index<'r>() -> response::Result<'r> {
     )
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Item {
+    title: String,
+    link: String,
+    pub_date: String,
+}
+
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
         let mut tera = Tera::default();
         tera.autoescape_on(vec!["one_off"]);
-        let input = Asset::get("rss.tera").unwrap();
-        let input = String::from_utf8(input.to_vec()).unwrap();
-        tera.add_raw_template("one_off", &input).unwrap();
+        let template_u8 = Asset::get("rss.tera").unwrap();
+        let template_str = std::str::from_utf8(&template_u8).unwrap();
+        tera.add_raw_template("one_off", template_str).unwrap();
         tera
     };
 }
@@ -106,7 +106,7 @@ fn extract_date_string(item: &rss::Item) -> String {
     } else if let Ok(y) = DateTime::parse_from_rfc3339(date) {
         y.format("%F %R").to_string()
     } else {
-        "".to_string()
+        date.to_string()
     }
 }
 
