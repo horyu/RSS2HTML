@@ -2,10 +2,12 @@
 
 #[macro_use]
 extern crate rocket;
-use rocket::config::{Config, Environment};
-use rocket::http::{uri::Uri, ContentType, RawStr, Status};
-use rocket::response;
-use rocket::response::content;
+use rocket::{
+    config::{Config, Environment},
+    http::{uri::Uri, ContentType, RawStr, Status},
+    response,
+    response::content
+};
 
 #[macro_use]
 extern crate lazy_static;
@@ -14,7 +16,10 @@ extern crate lazy_static;
 extern crate rust_embed;
 #[derive(RustEmbed)]
 #[folder = "files/"]
-struct Asset;
+struct RustAsset;
+#[derive(RustEmbed)]
+#[folder = "../common_files"]
+struct CommonAsset;
 
 use chrono::DateTime;
 use rss::Channel;
@@ -24,7 +29,7 @@ use serde::{Deserialize, Serialize};
 
 #[get("/")]
 fn index<'r>() -> response::Result<'r> {
-    Asset::get("index.html").map_or_else(
+    RustAsset::get("index.html").map_or_else(
         || Err(Status::NotFound),
         |d| {
             response::Response::build()
@@ -35,22 +40,48 @@ fn index<'r>() -> response::Result<'r> {
     )
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Item {
-    title: String,
-    link: String,
-    pub_date: String,
+#[get("/robots.txt")]
+fn robots<'r>() -> response::Result<'r> {
+    CommonAsset::get("robots.txt").map_or_else(
+        || Err(Status::NotFound),
+        |d| {
+            response::Response::build()
+                .header(ContentType::Plain)
+                .sized_body(std::io::Cursor::new(d))
+                .ok()
+        },
+    )
+}
+
+#[get("/favicon.svg")]
+fn favicon<'r>() -> response::Result<'r> {
+    CommonAsset::get("favicon.svg").map_or_else(
+        || Err(Status::NotFound),
+        |d| {
+            response::Response::build()
+                .header(ContentType::SVG)
+                .sized_body(std::io::Cursor::new(d))
+                .ok()
+        },
+    )
 }
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
         let mut tera = Tera::default();
         tera.autoescape_on(vec!["one_off"]);
-        let template_u8 = Asset::get("rss.tera").unwrap();
+        let template_u8 = RustAsset::get("rss.tera").unwrap();
         let template_str = std::str::from_utf8(&template_u8).unwrap();
         tera.add_raw_template("one_off", template_str).unwrap();
         tera
     };
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Item {
+    title: String,
+    link: String,
+    pub_date: String,
 }
 
 #[get("/rss.tera?<url>")]
@@ -116,6 +147,6 @@ fn main() {
         .finalize()
         .unwrap();
     rocket::custom(config)
-        .mount("/", routes![index, rss_tera])
+        .mount("/", routes![index, robots, favicon, rss_tera])
         .launch();
 }
