@@ -53,7 +53,7 @@ fn robots<'r>() -> response::Result<'r> {
     )
 }
 
-#[get("/favicon.svg")]
+#[get("/favicon.ico")]
 fn favicon<'r>() -> response::Result<'r> {
     CommonAsset::get("favicon.svg").map_or_else(
         || Err(Status::NotFound),
