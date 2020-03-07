@@ -27,43 +27,33 @@ use tera::{Context, Tera};
 
 use serde::{Deserialize, Serialize};
 
+macro_rules! asset_response {
+    ($asset:ty, $fname:expr, $ctype:expr) => {
+        <$asset>::get($fname).map_or_else(
+            || Err(Status::NotFound),
+            |d| {
+                response::Response::build()
+                    .header($ctype)
+                    .sized_body(std::io::Cursor::new(d))
+                    .ok()
+            },
+        )
+    };
+}
+
 #[get("/")]
 fn index<'r>() -> response::Result<'r> {
-    RustAsset::get("index.html").map_or_else(
-        || Err(Status::NotFound),
-        |d| {
-            response::Response::build()
-                .header(ContentType::HTML)
-                .sized_body(std::io::Cursor::new(d))
-                .ok()
-        },
-    )
+    asset_response!(RustAsset, "index.html", ContentType::HTML)
 }
 
 #[get("/robots.txt")]
 fn robots<'r>() -> response::Result<'r> {
-    CommonAsset::get("robots.txt").map_or_else(
-        || Err(Status::NotFound),
-        |d| {
-            response::Response::build()
-                .header(ContentType::Plain)
-                .sized_body(std::io::Cursor::new(d))
-                .ok()
-        },
-    )
+    asset_response!(CommonAsset, "robots.txt", ContentType::Plain)
 }
 
 #[get("/favicon.ico")]
 fn favicon<'r>() -> response::Result<'r> {
-    CommonAsset::get("favicon.svg").map_or_else(
-        || Err(Status::NotFound),
-        |d| {
-            response::Response::build()
-                .header(ContentType::SVG)
-                .sized_body(std::io::Cursor::new(d))
-                .ok()
-        },
-    )
+    asset_response!(CommonAsset, "favicon.svg", ContentType::SVG)
 }
 
 lazy_static! {
