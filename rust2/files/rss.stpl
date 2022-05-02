@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>RSS2HTML</title>
+<meta charset="UTF-8">
+<link rel="icon" href="/favicon.ico" type="image/svg+xml">
+</head>
+<body>
+<h1>RSS2HTML</h1>
+<form method="get" action="rss.stpl" >
+<p>
+RSS-URL：<input type="text" name="url" size="40">
+</p>
+<p>
+<input type="submit" value="送信"><input type="reset" value="リセット">
+</p>
+</form>
+<ul>
+<% for item in items { %>
+  <li>
+    <%= item.pub_date %>
+    <a href="<%= item.link %>">
+      <%= item.title %>
+    </a>
+  </li>
+<% } %>
+</ul>
+</body>
+</html>

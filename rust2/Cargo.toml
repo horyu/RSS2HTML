@@ -1,0 +1,16 @@
+[package]
+name = "rust2"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "4"
+serde = { version = "1.0", features = ["derive"] }
+derive_more = "0.99.17"
+rss = "2.0"
+sailfish = "0.4"
+sailfish-macros = "0.4"
+reqwest = "0.11"
+chrono = "0.4"
